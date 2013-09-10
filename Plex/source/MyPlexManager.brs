@@ -8,6 +8,7 @@ Function createMyPlexManager(viewController) As Object
     obj.CreateRequest = mpCreateRequest
     obj.ValidateToken = mpValidateToken
     obj.Disconnect = mpDisconnect
+    obj.Destroy = mpDestroy
 
     obj.ExtraHeaders = {}
     obj.ExtraHeaders["X-Plex-Provides"] = "player"
@@ -121,6 +122,7 @@ Sub mpDisconnect()
     m.AuthToken = invalid
     RegDelete("AuthToken", "myplex")
 End Sub
+
 
 Function mpCheckTranscodeServer(showError=false As Boolean) As Boolean
     if m.TranscodeServer = invalid then

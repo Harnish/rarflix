@@ -229,3 +229,40 @@ sub ResetSelToken()
        end if
      end for
 end sub
+
+function mpDestroy(username = "invalid" as string) As Object
+    myplex = GetMyPlexManager()
+    if username <> "invalid" then
+      print "Destroying manual username " + username
+      myplex.Username = username
+    end if
+
+    l = GetAllMyPlexUsers()
+    for each li in l
+         if myplex.Username = li.username then
+              print "Disconnecting " + myplex.Username + " regdelete " + li.regkey
+              RegDelete(li.regkey, "myplex")
+              RegDelete("pin_" + li.regkey, "authentication") ' and remove pin code
+         end if
+    end for
+
+    m.EmailAddress = invalid
+    m.IsSignedIn = false
+    m.AuthToken = invalid
+    ' we didn't specify a user - so it's dafe to remove the registered AuthToken
+    if username = invalid then
+        print "Disconnecting " + myplex.Username + " regdelete AuthToken"
+        RegDelete("AuthToken", "myplex")
+    end if
+
+End function
+
+
+Function getCurrentMyPlexLabelMulti() As String
+    myplex = GetMyPlexManager()
+    if myplex.IsSignedIn then
+        return "Connect Another myPlex Account"
+    else
+        return "Connect myPlex account"
+    end if
+End Function

@@ -105,19 +105,26 @@ Sub pinOnUrlEvent(msg, requestContext)
                 if m.myPlex.ValidateToken(token) then
                     ' still ok to overwrite the main account
                     RegWrite("AuthToken", token, "myplex")
-
-                    ' but lets add it as an extra authToken#
+                    print "------------------- NEW adding token for AuthToken"
+                    ' but lets add it as an extra authToken# and remove any old authTokens with the same user
                     myplex = GetMyPlexManager()
+                    m.myPlex.Destroy(myplex.Username)
+		    nextReg = invalid
                     for i = 1 to 99 step 1
                         check = "AuthToken" + tostr(i)
                         print "check if " + check " exists"
                         if RegRead(check, "myplex") = invalid then 
-		            print "adding pin for " + check
-                            RegWrite(check, token, "myplex")
+			    if nextReg = invalid then
+                              nextReg = check
+                            end if
                             i = 100
                         end if
                     end for
+                    if nextReg <> invalid
+                        print "------------------- NEW adding token for " + nextReg
 
+                        RegWrite(nextReg, token, "myplex")
+                    end if
                 end if
                 m.Screen.Close()
             end if
