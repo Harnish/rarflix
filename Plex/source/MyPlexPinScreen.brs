@@ -103,9 +103,21 @@ Sub pinOnUrlEvent(msg, requestContext)
             if len(token) > 0 then
                 Debug("Got a myPlex token")
                 if m.myPlex.ValidateToken(token) then
+                    ' still ok to overwrite the main account
                     RegWrite("AuthToken", token, "myplex")
-                    'RegWrite("AuthToken1", token, "myplex")
-                    'RegWrite("AuthToken2", token, "myplex")
+
+                    ' but lets add it as an extra authToken#
+                    myplex = GetMyPlexManager()
+                    for i = 1 to 99 step 1
+                        check = "AuthToken" + tostr(i)
+                        print "check if " + check " exists"
+                        if RegRead(check, "myplex") = invalid then 
+		            print "adding pin for " + check
+                            RegWrite(check, token, "myplex")
+                            i = 100
+                        end if
+                    end for
+
                 end if
                 m.Screen.Close()
             end if

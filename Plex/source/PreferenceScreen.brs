@@ -348,7 +348,7 @@ Sub showPreferencesScreen()
                     end if
                 end for
     if myplex.IsSignedIn then
-        m.AddItem({title: "Connect another myPlex account"}, "myplex_add")
+       ' m.AddItem({title: "Connect another myPlex account"}, "myplex_add")
     end if
     ' END other myPlex accounts
     m.AddItem({title: "Quality"}, "quality", m.GetEnumValue("quality"))
@@ -434,31 +434,31 @@ Function prefsMainHandleMessage(msg) As Boolean
                     m.ViewController.InitializeOtherScreen(screen, invalid)
                     screen.Show()
                 end if
-            else if command = "myplex_add" then
-                'if m.myplex.IsSignedIn then
-                '    m.myplex.Disconnect()
-                '    m.Changes["myplex"] = "disconnected"
-                '    m.SetTitle(msg.GetIndex(), getCurrentMyPlexLabel())
-                'else
-                for i = 1 to 99 step 1
-                   check = "AuthToken" + tostr(i)
-		   debug("WOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOHOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
-                   print "check if " + check " exists"
-                    if RegRead(check, "myplex") = invalid then 
-                      print "wooooooooooohooooooooooooo NEXT token is " + check
-		      i = 100
-                    end if
-'    token = RegRead("AuthToken1", "myplex")
-'    RegDelete("AuthToken", "myplex")
-'    RegWrite("AuthToken", token, "myplex")
-'
-'   m.checkMyPlexOnActivate = true
-'                    m.myPlexIndex = msg.GetIndex()
-'                    screen = createMyPlexPinScreen(m.ViewController)
-'                    m.ViewController.InitializeOtherScreen(screen, invalid)
-'                    screen.Show()
-                next
-                'end if
+'            else if command = "myplex_add" then
+'                'if m.myplex.IsSignedIn then
+'                '    m.myplex.Disconnect()
+'                '    m.Changes["myplex"] = "disconnected"
+'                '    m.SetTitle(msg.GetIndex(), getCurrentMyPlexLabel())
+'                'else
+'                for i = 1 to 99 step 1
+'                   check = "AuthToken" + tostr(i)
+'		   debug("WOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOHOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+'                   print "check if " + check " exists"
+'                    if RegRead(check, "myplex") = invalid then 
+'                      print "wooooooooooohooooooooooooo NEXT token is " + check
+'		      i = 100
+'                    end if
+''    token = RegRead("AuthToken1", "myplex")
+''    RegDelete("AuthToken", "myplex")
+''    RegWrite("AuthToken", token, "myplex")
+''
+''   m.checkMyPlexOnActivate = true
+''                    m.myPlexIndex = msg.GetIndex()
+''                    screen = createMyPlexPinScreen(m.ViewController)
+''                    m.ViewController.InitializeOtherScreen(screen, invalid)
+''                    screen.Show()
+'                next
+'                'end if
             ' removed 5.1 (finepointone) -- moved to audio prefs RR
             else if command = "quality" OR command = "quality_remote" OR command = "level" OR command = "directplay" OR command = "screensaver" OR command = "rottentomatoes" OR command = "switchaccounts" then
                 m.HandleEnumPreference(command, msg.GetIndex())
