@@ -65,6 +65,7 @@ Sub mpCheckAuthentication()
     end if
 End Sub
 
+
 Function mpValidateToken(token) As Boolean
     req = m.CreateRequest("", "/users/sign_in.xml", false)
     port = CreateObject("roMessagePort")
@@ -90,8 +91,11 @@ Function mpValidateToken(token) As Boolean
 End Function
 
 Function mpCreateRequest(sourceUrl As String, path As String, appendToken=true As Boolean, connectionUrl=invalid) As Object
+	 print "1"
     url = FullUrl(m.serverUrl, sourceUrl, path)
+	 print "2"
     req = CreateURLTransferObject(url)
+	 print "3"
     if appendToken AND m.AuthToken <> invalid then
         if Instr(1, url, "?") > 0 then
             req.SetUrl(url + "&auth_token=" + m.AuthToken)
@@ -99,10 +103,14 @@ Function mpCreateRequest(sourceUrl As String, path As String, appendToken=true A
             req.SetUrl(url + "?auth_token=" + m.AuthToken)
         end if
     end if
+	 print "4"
     for each name in m.ExtraHeaders
+	 print "5"
         req.AddHeader(name, m.ExtraHeaders[name])
     next
+	 print "6"
     req.AddHeader("Accept", "application/xml")
+	 print "7"
     req.SetCertificatesFile("common:/certs/ca-bundle.crt")
     return req
 End Function

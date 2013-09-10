@@ -40,6 +40,7 @@ Sub Main(args)
         RegDelete("play_theme_music", "preferences")
     end if
 
+
     'initialize theme attributes like titles, logos and overhang color
     initTheme()
 
@@ -52,6 +53,7 @@ Sub Main(args)
     'prepare the screen for display and get ready to begin
     controller = createViewController()
     controller.Show()
+
 End Sub
 
 Sub initGlobals()

@@ -93,3 +93,63 @@ Function RRbreadcrumbDate(myscreen) As Object
     end if
 
 End function
+
+
+
+Function GetAllMyPlexUsers() as Object
+    info = CreateObject("roAssociativeArray")
+    l = CreateObject("roList")
+    for i = 1 to 99 step 1
+       check = "AuthToken" + tostr(i)
+       otherToken = RegRead(check, "myplex")
+       if otherToken <> invalid then 
+           print "wooohoo: " + check + "=" + otherToken
+           obj = CreateObject("roAssociativeArray")
+           obj.CreateRequest = mpCreateRequest
+           obj.ValidateToken = mpValidateToken
+           obj.Disconnect = mpDisconnect
+
+           obj.ExtraHeaders = {}
+           obj.ExtraHeaders["X-Plex-Provides"] = "player"
+           ' Masquerade as a basic Plex Media Server
+           obj.serverUrl = "https://my.plexapp.com"
+           obj.name = "myPlex"
+
+           req = CreateObject("roAssociativeArray")
+           req = obj.CreateRequest("", "/users/sign_in.xml", false)
+           port = CreateObject("roMessagePort")
+           req.SetPort(port)
+           req.AsyncPostFromString("auth_token=" + otherToken)
+           event = wait(10000, port)
+           ' TODO ( add to regkey and update periodically ) or just make users exit to get an update
+           ' this lookup on teh prefs screen is pretty slow every time
+           if type(event) = "roUrlEvent" AND event.GetInt() = 1 AND event.GetResponseCode() = 201 then
+               xml = CreateObject("roXMLElement")
+               xml.Parse(event.GetString())
+               obj1 = CreateObject("roAssociativeArray")
+               obj1.num = i
+               obj1.regkey = check 'AuthToken#
+               obj1.username = xml@username
+               obj1.email = xml@email
+               obj1.token = otherToken
+               l.AddTail(obj1)
+               Debug("Validated myPlex " + check + " token, corresponds to " + xml@username)
+           else
+               Debug("Failed to get TokenDetails for myPlex token" + check)
+           end if
+       end if
+    end for
+' print l.Count();" entries"
+' l.ResetIndex()
+' for each li in l
+'     printAA(li)
+'     print li.username, li.email, li.token
+' end for
+'stop
+ return l
+End Function
+
+
+
+
+

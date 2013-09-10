@@ -239,21 +239,38 @@ Function createPreferencesScreen(viewController) As Object
 
 
     ' start  multi plex account
+    myplex = GetMyPlexManager()
+    mpuser = "not signed in"
+    mpemail = "not signed in"
+    if myplex.Username <> invalid then
+        mpuser = myplex.Username
+        mpemail = myplex.EmailAddress
+    end if
+ 
     accounts = [
-        { title: "Current - add Name", EnumValue: "AuthToken" },
+        { title: mpemail, EnumValue: "AuthToken" },
     ]
 
 
     ' connect other myplex accounts
-    myplex = GetMyPlexManager()
-    for i = 1 to 99 step 1
-       check = "AuthToken" + tostr(i)
-       if RegRead(check, "myplex") <> invalid then 
-           accounts.Push({ title: check, EnumValue: check })
-           'qualities.Push({ title: check, EnumValue: check })
-       end if
+    l = GetAllMyPlexUsers()
+    for each li in l
+        'printAA(li)
+        'print li.username, li.email, li.token
+        if mpuser <> li.username then
+             accounts.Push({ title: li.email, EnumValue: li.regkey })
+        end if
     end for
 
+'    for i = 1 to 99 step 1
+'       check = "AuthToken" + tostr(i)
+'      otherToken = RegRead(check, "myplex")
+'      if otherToken <> invalid then 
+'          ' TODO - add account name
+'          accounts.Push({ title: check, EnumValue: check })
+'          'qualities.Push({ title: check, EnumValue: check })
+'      end if
+'   end for
 
     obj.Prefs["switchaccounts"] = {
         values: accounts,
@@ -262,8 +279,6 @@ Function createPreferencesScreen(viewController) As Object
     }
 
     ' end multi plex account
-
-
 
 
     ' Direct play options
