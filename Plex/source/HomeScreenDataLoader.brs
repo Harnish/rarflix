@@ -450,7 +450,7 @@ Sub homeOnUrlEvent(msg, requestContext)
         machineId = tostr(server.MachineID)
 
         if status.loadedServers.DoesExist(machineID) then
-            Debug("Ignoring content for server that was already loaded: " + machineID)
+            Debug("-------------------------------------------Ignoring content for server that was already loaded: " + machineID)
             items = []
             requestContext.item = invalid
             requestContext.emptyItem = invalid
@@ -574,7 +574,7 @@ Sub homeOnUrlEvent(msg, requestContext)
         machineId = tostr(server.MachineID)
 
         if status.loadedServers.DoesExist(machineID) then
-            Debug("Ignoring content for server that was already loaded: " + machineID)
+            Debug("-----------------------------------------------Ignoring content for server that was already loaded: " + machineID)
             items = []
             requestContext.item = invalid
             requestContext.emptyItem = invalid
@@ -642,7 +642,7 @@ Sub homeOnUrlEvent(msg, requestContext)
 
         existing = GetPlexMediaServer(xml@machineIdentifier)
         if server.machineID <> invalid AND server.machineID <> xml@machineIdentifier then
-            Debug("Ignoring server response from unexpected machine ID")
+            Debug("---------------------------------------Ignoring server response from unexpected machine ID")
         else
             duplicate = false
             if existing <> invalid then
@@ -732,8 +732,12 @@ Sub homeOnUrlEvent(msg, requestContext)
             ' If we already have a server for this machine ID then disregard
             existing = GetPlexMediaServer(serverElem@machineIdentifier)
             addr = firstOf(serverElem@scheme, "http") + "://" + serverElem@host + ":" + serverElem@port
-            if existing <> invalid AND (existing.IsAvailable OR existing.ServerUrl = addr) then
-                Debug("Ignoring duplicate shared server: " + tostr(serverElem@machineIdentifier))
+	    skipcheck = 1
+	    if RegRead("ReloadHome", "myplex", "1") = "1" then
+  	        skipcheck = invalid ' force reload
+            end if
+            if existing <> invalid AND (existing.IsAvailable OR existing.ServerUrl = addr) and skipcheck <> invalid then
+                Debug("-----------------------------------------------------Ignoring duplicate shared server: " + tostr(serverElem@machineIdentifier))
             else
                 if existing = invalid then
                     newServer = newPlexMediaServer(addr, serverElem@name, serverElem@machineIdentifier)
@@ -750,7 +754,9 @@ Sub homeOnUrlEvent(msg, requestContext)
                 ' most efficient connection.
                 localAddresses = strTokenize(serverElem@localAddresses, ",")
                 for each localAddress in localAddresses
-                    m.CreateServerRequests(newServer, true, false, "http://" + localAddress + ":32400")
+                    'm.CreateServerRequests(newServer, true, false, "http://" + localAddress + ":32400")
+		    ' why not refresh? ljunkie
+                    m.CreateServerRequests(newServer, true, true, "http://" + localAddress + ":32400")
                 next
 
                 if serverElem@owned = "1" then
@@ -761,8 +767,9 @@ Sub homeOnUrlEvent(msg, requestContext)
                     newServer.name = firstOf(serverElem@name, newServer.name) + " (shared by " + serverElem@sourceTitle + ")"
                     newServer.owned = false
                 end if
-                m.CreateServerRequests(newServer, true, false)
-
+                ' m.CreateServerRequests(newServer, true, false)
+		'ljunkie  true, true
+                m.CreateServerRequests(newServer, true, true)
                 Debug("Added myPlex server: " + tostr(newServer.name))
             end if
         next
@@ -862,12 +869,12 @@ Sub homeOnMyPlexChange()
         m.CreateMyPlexRequests(true)
 
         if RegRead("ReloadHome", "myplex", "1") = "1" then
-            RegDelete("ReloadHome", "myplex")
             vc = GetViewController()
             createHomeScreen(vc)
             for each server in PlexMediaServers()
-                m.CreateServerRequests(server, true, true)
+                m.CreateServerRequests(server, true, false)
             next
+            RegDelete("ReloadHome", "myplex")
         end if
 
     else
