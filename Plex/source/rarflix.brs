@@ -75,6 +75,13 @@ End Function
 Function RRbreadcrumbDate(myscreen) As Object
     screenName = firstOf(myScreen.ScreenName, type(myScreen.Screen))
     if screenName <> invalid and screenName = "Home" then 
+
+        myplex = GetMyPlexManager()
+' ljunkie (TODO) add username in some useful place.. breadcrumbs are already to long..
+'        username = ""
+'        if myplex.IsSignedIn then
+'            username = myplex.Username
+'        end if
         Debug("update " + screenName + " screen time")
         date = CreateObject("roDateTime")
         timeString = RRmktime(date.AsSeconds())
