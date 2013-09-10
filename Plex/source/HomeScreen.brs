@@ -27,7 +27,8 @@ Sub refreshHomeScreen(changes)
 
     ' If a server was added or removed, we need to update the sections,
     ' channels, and channel directories.
-    if changes.DoesExist("servers") then
+    ' we should also refresh on myplex changes -- different view states
+    if changes.DoesExist("servers") or changes.DoesExist("myplex") then
         for each server in PlexMediaServers()
             if server.machineID <> invalid AND GetPlexMediaServer(server.machineID) = invalid then
                 PutPlexMediaServer(server)

@@ -455,6 +455,7 @@ Sub homeOnUrlEvent(msg, requestContext)
             requestContext.item = invalid
             requestContext.emptyItem = invalid
         else
+            ' ljunkie testing - do not keep laded data for testing
             status.loadedServers[machineID] = "1"
             response = CreateObject("roAssociativeArray")
             response.xml = xml
@@ -578,6 +579,7 @@ Sub homeOnUrlEvent(msg, requestContext)
             requestContext.item = invalid
             requestContext.emptyItem = invalid
         else
+            ' ljunkie testing - do not keep laded data for testing
             status.loadedServers[machineID] = "1"
             response = CreateObject("roAssociativeArray")
             response.xml = xml
@@ -679,7 +681,8 @@ Sub homeOnUrlEvent(msg, requestContext)
             if server.owned AND NOT duplicate then
                 status = m.contentArray[m.RowIndexes["misc"]]
                 machineId = tostr(server.machineID)
-                if NOT server.IsSecondary AND NOT status.loadedServers.DoesExist(machineID) then
+                if NOT server.IsSecondary AND NOT status.loadedServers.DoesExist(machineID) then 
+                ' ljunkie testing - do not keep laded data for testing
                     status.loadedServers[machineID] = "1"
                     channelDir = CreateObject("roAssociativeArray")
                     channelDir.server = server
@@ -842,7 +845,31 @@ Sub homeOnMyPlexChange()
     Debug("myPlex status changed")
 
     if GetMyPlexManager().IsSignedIn then
+
+        ' ljunkie - again wrong play for doing this. switching users
+        if RegRead("ReloadHome", "myplex", "1") = "1" then
+            m.RemoveFromRowIf(m.RowIndexes["sections"], AlwaysTrue)
+            m.RemoveFromRowIf(m.RowIndexes["channels"], AlwaysTrue)
+            m.RemoveFromRowIf(m.RowIndexes["on_deck"], AlwaysTrue)
+            m.RemoveFromRowIf(m.RowIndexes["recently_added"], AlwaysTrue)
+            '        m.RemoveFromRowIf(m.RowIndexes["misc"], AlwaysTrue)
+            m.RemoveFromRowIf(m.RowIndexes["queue"], AlwaysTrue)
+            m.RemoveFromRowIf(m.RowIndexes["recommendations"], AlwaysTrue)
+            m.RemoveFromRowIf(m.RowIndexes["shared_sections"], AlwaysTrue)
+        end if
+
+        ' default before my changes
         m.CreateMyPlexRequests(true)
+
+        if RegRead("ReloadHome", "myplex", "1") = "1" then
+            RegDelete("ReloadHome", "myplex")
+            vc = GetViewController()
+            createHomeScreen(vc)
+            for each server in PlexMediaServers()
+                m.CreateServerRequests(server, true, true)
+            next
+        end if
+
     else
         m.RemoveFromRowIf(m.RowIndexes["sections"], IsMyPlexServer)
         m.RemoveFromRowIf(m.RowIndexes["channels"], IsMyPlexServer)

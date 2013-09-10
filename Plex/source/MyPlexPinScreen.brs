@@ -105,7 +105,7 @@ Sub pinOnUrlEvent(msg, requestContext)
                 if m.myPlex.ValidateToken(token) then
                     RegWrite("AuthToken", token, "myplex")
                     'RegWrite("AuthToken1", token, "myplex")
-                    RegWrite("AuthToken2", token, "myplex")
+                    'RegWrite("AuthToken2", token, "myplex")
                 end if
                 m.Screen.Close()
             end if

@@ -164,6 +164,28 @@ Sub prefsOnUserInput(value, screen)
             m.AppendValue(m.currentIndex, screen.SelectedLabel)
         end if
     end if
+
+
+   ' ljunkie - switch myPlex accounts -- probably wrong place -  (TODO)
+    if m.currentRegKey <> invalid and m.currentRegKey = "switchaccounts" then 
+        token_sel = RegRead("switchaccounts", "preferences")
+        token_choice = RegRead(token_sel, "myplex")
+        token_cur = RegRead("AuthToken", "myplex")
+        RegWrite("ReloadHome", "1", "myplex")
+
+        if token_cur <> token_choice then
+            m.myplex.Disconnect()
+            m.Changes["myplex"] = "disconnected"
+            Debug("Got a myPlex token")
+            if m.myPlex.ValidateToken(token_choice) then
+                RegWrite("AuthToken", token_choice, "myplex")
+                m.Changes["myplex"] = "connected"
+                vc = GetViewController()
+                createHomeScreen(vc)
+            end if
+        end if
+    end if
+    ' end switching accounts
 End Sub
 
 Function prefsGetEnumValue(regKey)
@@ -214,6 +236,35 @@ Function createPreferencesScreen(viewController) As Object
         heading: "Higher settings produce better video quality but require more" + Chr(10) + "network bandwidth. (Current reported bandwidth is " + tostr(GetGlobalAA().Lookup("bandwidth")) + "kbps)",
         default: RegRead("quality", "preferences", "7")
     }
+
+
+    ' start  multi plex account
+    accounts = [
+        { title: "Current - add Name", EnumValue: "AuthToken" },
+    ]
+
+
+    ' connect other myplex accounts
+    myplex = GetMyPlexManager()
+    for i = 1 to 99 step 1
+       check = "AuthToken" + tostr(i)
+       if RegRead(check, "myplex") <> invalid then 
+           accounts.Push({ title: check, EnumValue: check })
+           'qualities.Push({ title: check, EnumValue: check })
+       end if
+    end for
+
+
+    obj.Prefs["switchaccounts"] = {
+        values: accounts,
+        heading: "Account",
+        default: "AuthToken"
+    }
+
+    ' end multi plex account
+
+
+
 
     ' Direct play options
     directplay = [
@@ -268,6 +319,38 @@ Sub showPreferencesScreen()
     ' re-orderd - RR
     m.AddItem({title: "Plex Media Servers"}, "servers")
     m.AddItem({title: getCurrentMyPlexLabel()}, "myplex")
+
+    ' moving to user input
+'    token_sel = RegRead("switchaccounts", "preferences")
+'    token_choice = RegRead(token_sel, "myplex")
+'    token_cur = RegRead("AuthToken", "myplex")
+'    if token_cur <> token_choice then
+'        m.myplex.Disconnect()
+'        m.Changes["myplex"] = "disconnected"
+'        'm.SetTitle(msg.GetIndex(), getCurrentMyPlexLabel())
+'        Debug("Got a myPlex token")
+'        if m.myPlex.ValidateToken(token_choice) then
+'            'print "woooohoooo we are validated"
+'            RegWrite("AuthToken", token_choice, "myplex")
+'            'm.Changes["myplex"] = "connected"
+'        end if
+'        m.Home = m.CreateHomeScreen()    
+'    end if
+
+   ' connect other myplex accounts
+    myplex = GetMyPlexManager()
+                for i = 1 to 99 step 1
+                   check = "AuthToken" + tostr(i)
+                   print "check if " + check " exists"
+                    if RegRead(check, "myplex") <> invalid then 
+                      m.AddItem({title: "Switch account"}, "switchaccounts", m.GetEnumValue("switchaccounts"))
+                      i = 100
+                    end if
+                end for
+    if myplex.IsSignedIn then
+        m.AddItem({title: "Connect another myPlex account"}, "myplex_add")
+    end if
+    ' END other myPlex accounts
     m.AddItem({title: "Quality"}, "quality", m.GetEnumValue("quality"))
     m.AddItem({title: "Remote Quality"}, "quality_remote", m.GetEnumValue("quality_remote"))
     m.AddItem({title: "Rotten Tomatoes"}, "rottentomatoes", m.GetEnumValue("rottentomatoes"))
@@ -351,8 +434,33 @@ Function prefsMainHandleMessage(msg) As Boolean
                     m.ViewController.InitializeOtherScreen(screen, invalid)
                     screen.Show()
                 end if
+            else if command = "myplex_add" then
+                'if m.myplex.IsSignedIn then
+                '    m.myplex.Disconnect()
+                '    m.Changes["myplex"] = "disconnected"
+                '    m.SetTitle(msg.GetIndex(), getCurrentMyPlexLabel())
+                'else
+                for i = 1 to 99 step 1
+                   check = "AuthToken" + tostr(i)
+		   debug("WOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOHOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+                   print "check if " + check " exists"
+                    if RegRead(check, "myplex") = invalid then 
+                      print "wooooooooooohooooooooooooo NEXT token is " + check
+		      i = 100
+                    end if
+'    token = RegRead("AuthToken1", "myplex")
+'    RegDelete("AuthToken", "myplex")
+'    RegWrite("AuthToken", token, "myplex")
+'
+'   m.checkMyPlexOnActivate = true
+'                    m.myPlexIndex = msg.GetIndex()
+'                    screen = createMyPlexPinScreen(m.ViewController)
+'                    m.ViewController.InitializeOtherScreen(screen, invalid)
+'                    screen.Show()
+                next
+                'end if
             ' removed 5.1 (finepointone) -- moved to audio prefs RR
-            else if command = "quality" OR command = "quality_remote" OR command = "level" OR command = "directplay" OR command = "screensaver" OR command = "rottentomatoes" then
+            else if command = "quality" OR command = "quality_remote" OR command = "level" OR command = "directplay" OR command = "screensaver" OR command = "rottentomatoes" OR command = "switchaccounts" then
                 m.HandleEnumPreference(command, msg.GetIndex())
             else if command = "slideshow" then
                 screen = createSlideshowPrefsScreen(m.ViewController)
@@ -1481,7 +1589,7 @@ End Function
 Function getCurrentMyPlexLabel() As String
     myplex = GetMyPlexManager()
     if myplex.IsSignedIn then
-        return "Disconnect myPlex account (" + myplex.EmailAddress + ")"
+        return "Disconnect myPlex (" + myplex.EmailAddress + ")"
     else
         return "Connect myPlex account"
     end if
