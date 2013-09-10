@@ -165,27 +165,33 @@ Sub prefsOnUserInput(value, screen)
         end if
     end if
 
-
    ' ljunkie - switch myPlex accounts -- probably wrong place -  (TODO)
     if m.currentRegKey <> invalid and m.currentRegKey = "switchaccounts" then 
         token_sel = RegRead("switchaccounts", "preferences")
         token_choice = RegRead(token_sel, "myplex")
         token_cur = RegRead("AuthToken", "myplex")
-        RegWrite("ReloadHome", "1", "myplex")
 
         if token_cur <> token_choice then
-            m.myplex.Disconnect()
-            m.Changes["myplex"] = "disconnected"
-            Debug("Got a myPlex token")
-            if m.myPlex.ValidateToken(token_choice) then
-                RegWrite("AuthToken", token_choice, "myplex")
-                m.Changes["myplex"] = "connected"
-                vc = GetViewController()
-                createHomeScreen(vc)
+            if showPinScreen(token_sel) then
+                 m.myplex.Disconnect()
+                 m.Changes["myplex"] = "disconnected"
+                 Debug("Got a myPlex token")
+                 if m.myPlex.ValidateToken(token_choice) then
+                    RegWrite("ReloadHome", "1", "myplex")
+                    RegWrite("AuthToken", token_choice, "myplex")
+                    m.Changes["myplex"] = "connected"
+                    vc = GetViewController()
+                    createHomeScreen(vc)
+                 end if
+            else 
+                ' Pin failed -- reset selected token and append failure list item
+                ResetSelToken()
+                m.AppendValue(m.currentIndex,"pin failed")
             end if
-        end if
+       end if
     end if
     ' end switching accounts
+
 End Sub
 
 Function prefsGetEnumValue(regKey)
@@ -247,37 +253,24 @@ Function createPreferencesScreen(viewController) As Object
         mpemail = myplex.EmailAddress
     end if
  
-    accounts = [
-        { title: mpemail, EnumValue: "AuthToken" },
-    ]
-
+'    accounts = [
+'        { title: mpemail, EnumValue: "AuthToken" },
+'    ]
+   accounts =[]
 
     ' connect other myplex accounts
     l = GetAllMyPlexUsers()
     for each li in l
-        'printAA(li)
-        'print li.username, li.email, li.token
-        if mpuser <> li.username then
+         if mpuser <> li.username then
              accounts.Push({ title: li.email, EnumValue: li.regkey })
         end if
     end for
 
-'    for i = 1 to 99 step 1
-'       check = "AuthToken" + tostr(i)
-'      otherToken = RegRead(check, "myplex")
-'      if otherToken <> invalid then 
-'          ' TODO - add account name
-'          accounts.Push({ title: check, EnumValue: check })
-'          'qualities.Push({ title: check, EnumValue: check })
-'      end if
-'   end for
-
     obj.Prefs["switchaccounts"] = {
         values: accounts,
-        heading: "Account",
+        heading: "Switch myPlex Accounts",
         default: "AuthToken"
     }
-
     ' end multi plex account
 
 
@@ -335,33 +328,17 @@ Sub showPreferencesScreen()
     m.AddItem({title: "Plex Media Servers"}, "servers")
     m.AddItem({title: getCurrentMyPlexLabel()}, "myplex")
 
-    ' moving to user input
-'    token_sel = RegRead("switchaccounts", "preferences")
-'    token_choice = RegRead(token_sel, "myplex")
-'    token_cur = RegRead("AuthToken", "myplex")
-'    if token_cur <> token_choice then
-'        m.myplex.Disconnect()
-'        m.Changes["myplex"] = "disconnected"
-'        'm.SetTitle(msg.GetIndex(), getCurrentMyPlexLabel())
-'        Debug("Got a myPlex token")
-'        if m.myPlex.ValidateToken(token_choice) then
-'            'print "woooohoooo we are validated"
-'            RegWrite("AuthToken", token_choice, "myplex")
-'            'm.Changes["myplex"] = "connected"
-'        end if
-'        m.Home = m.CreateHomeScreen()    
-'    end if
-
    ' connect other myplex accounts
     myplex = GetMyPlexManager()
-                for i = 1 to 99 step 1
-                   check = "AuthToken" + tostr(i)
-                   print "check if " + check " exists"
-                    if RegRead(check, "myplex") <> invalid then 
-                      m.AddItem({title: "Switch account"}, "switchaccounts", m.GetEnumValue("switchaccounts"))
-                      i = 100
-                    end if
-                end for
+    for i = 1 to 99 step 1
+        check = "AuthToken" + tostr(i)
+        print "check if " + check " exists"
+        if RegRead(check, "myplex") <> invalid  then 
+            m.AddItem({title: "Switch account"}, "switchaccounts", m.GetEnumValue("switchaccounts"))
+            i = 100
+        end if
+    end for
+
     if myplex.IsSignedIn then
        ' m.AddItem({title: "Connect another myPlex account"}, "myplex_add")
     end if

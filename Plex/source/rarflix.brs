@@ -78,16 +78,17 @@ Function RRbreadcrumbDate(myscreen) As Object
 
         myplex = GetMyPlexManager()
 ' ljunkie (TODO) add username in some useful place.. breadcrumbs are already to long..
-'        username = ""
-'        if myplex.IsSignedIn then
-'            username = myplex.Username
-'        end if
+        username = ""
+        if myplex.IsSignedIn then
+            username = myplex.Username
+        end if
         Debug("update " + screenName + " screen time")
         date = CreateObject("roDateTime")
         timeString = RRmktime(date.AsSeconds())
         dateString = date.AsDateString("short-month-short-weekday")
         myscreen.Screen.SetBreadcrumbEnabled(true)
-        myscreen.Screen.SetBreadcrumbText(dateString, timeString)
+'        myscreen.Screen.SetBreadcrumbText(username+" " dateString, timeString)
+        myscreen.Screen.SetBreadcrumbText(username, timeString)
     else 
         Debug("will NOT update " + screenName + " screen time. " + screenName +"=Home")
     end if
@@ -103,7 +104,6 @@ Function GetAllMyPlexUsers() as Object
        check = "AuthToken" + tostr(i)
        otherToken = RegRead(check, "myplex")
        if otherToken <> invalid then 
-           print "wooohoo: " + check + "=" + otherToken
            obj = CreateObject("roAssociativeArray")
            obj.CreateRequest = mpCreateRequest
            obj.ValidateToken = mpValidateToken
@@ -139,17 +139,93 @@ Function GetAllMyPlexUsers() as Object
            end if
        end if
     end for
-' print l.Count();" entries"
-' l.ResetIndex()
-' for each li in l
-'     printAA(li)
-'     print li.username, li.email, li.token
-' end for
-'stop
+ ' print l.Count();" entries"
+ ' l.ResetIndex()
+ ' for each li in l
+ '     printAA(li)
+ '     print li.username, li.email, li.token
+ ' end for
+ 'stop
  return l
 End Function
 
+function showPinScreen(pin = "pin" as string) as boolean 
+ if pin <> "pin" then
+    pin = "pin_" + pin
+ end if
+
+ wanted = RegRead(pin, "authentication")
+ result = false
+
+ ' confirm pin code
+ if wanted <> invalid then 
+     Debug("checking pin for pin key for " + pin)
+     screen = CreateObject("roPinEntryDialog")
+     screen.setTitle("Confirm your identity")
+     screen.addButton(1,"Next")
+     screen.addButton(0,"Cancel")
+     screen.SetNumPinEntryFields(4)
+     port= CreateObject("roMessagePort")
+     screen.setMessagePort(port)
+     screen.show()
+     while true
+        msg=wait(0, screen.GetMessagePort())
+        if(msg.getIndex()=1)
+            if(screen.pin()=regRead(pin, "authentication"))
+  	        result = true
+                exit while
+            else
+                screen.close()
+               exit while
+            end if
+        end if
+
+        if(msg.getIndex()=0)
+           exit while
+        end if
+     end while
+ else
+     'pin not set - so lets set one
+     Debug("PIN NOT set for yet, let's create one " + pin)
+     screen = CreateObject("roPinEntryDialog")
+     screen.setTitle("Set PIN code")
+     screen.addButton(1,"Next")
+     screen.addButton(0,"Cancel")
+     screen.SetNumPinEntryFields(4)
+     port= CreateObject("roMessagePort")
+     screen.setMessagePort(port)
+     screen.show()
+     while true
+        msg=wait(0, screen.GetMessagePort())
+        if(msg.getIndex()=1)
+            print "setting PIN" + pin + " to " + screen.pin()
+            RegWrite(pin, screen.pin(), "authentication")
+	    result = true
+            exit while
+        else
+            exit while
+       end if
+  
+       if(msg.getIndex()=0)
+           exit while
+       end if
+     end while
+ end if
+
+ screen.close()
+ return result   
+
+end function
 
 
-
-
+sub ResetSelToken() 
+    token_cur = RegRead("AuthToken", "myplex")
+    for i = 1 to 99 step 1
+       check = "AuthToken" + tostr(i)
+       otherToken = RegRead(check, "myplex")
+       if otherToken = token_cur then 
+        print "ResetSelToken called: resetting token back to " + check
+          RegWrite("switchaccounts", check, "preferences")
+       end if
+     end for
+end sub

@@ -54,6 +54,7 @@ Sub Main(args)
     controller = createViewController()
     controller.Show()
 
+
 End Sub
 
 Sub initGlobals()
